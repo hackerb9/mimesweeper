@@ -148,3 +148,33 @@ something that is ugly but works. We need something that can:
    errors). Moreover, it would be nice if it has the option to keep
    running in the background as a daemon and fix configuration files
    as they are changed during upgrades.
+
+## Bugs
+
+* Maybe I should have modified the WINE source code to read
+  `/etc/wine/wine.inf` to allow local admin modifications.
+  It'd be a cleaner solution. 
+
+* I don't use the daemon code so it is not well tested.
+
+* Daemonization makes a straight-forward script seem overly complicated.
+
+* Waiting in the background for existing files to change may not even
+  make sense if I'm creating new WINEPREFIXes and immediately
+  installing software. I should instead use `inotifywait` to wait on
+  the directory which contains all my WINEPREFIXes
+  (`~/.wine/prefixes`).
+
+* Editing of files happens as soon as a change is detected. This may
+  be incorrect (race condition) if there is another process that is
+  altering the file incrementally.
+
+* `inotifywait` has only two modes: single-event or monitor.
+  Single-event is quite easy to use from a shell-script, but always
+  exits after the first (of possible several) events. Monitor mode is
+  not worth using because it never quits and thus must be run as a
+  coprocess. It would be nice if `inotifywait` had a "batch" mode
+  which would return a group of events (instead of exiting on the
+  first one). It could quit one second after the last event was
+  received.
+  
