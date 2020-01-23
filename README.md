@@ -3,6 +3,8 @@
 Remove all current Wine MIME-types and file extension associations.
 Attempt to prevent Wine from adding any more in the future.
 
+Sweep away those annoying MIMEs before they explode!
+
 ## Usage
 
     mimesweeper [-vndk]
@@ -11,6 +13,18 @@ Attempt to prevent Wine from adding any more in the future.
     -n: not-really (dry run)
     -d: daemonize
     -k: kill daemon
+
+In general you will run **mimesweeper** with no arguments. It removes
+files such as ~/.local/ share/mime/packages/x-wine*. It modifies the
+user's local system.reg file so new associations will not be created.
+(As long as the same WINEPREFIX directory is used, which is Wine's
+default.)
+
+If **mimesweeper** is run under **sudo**, it will also prevent MIME
+associations even if you later create a new WINEPREFIX directory. It
+does this by editing the system wine.inf files. However, due to Wine
+keeping configuration files under /usr instead of /etc, this script
+must be run again if wine is upgraded.
 
 ## Discussion
 
@@ -32,7 +46,7 @@ say, /etc/wine/wine.inf — for local preferences. We live in neither and
 must seek some other answer.
 
 ### First Solution
-There is a checkbox option in `winecfg` to disable "Manage File
+There is a checkbox option in **winecfg** to disable "Manage File
 Associations".
 
 #### First Solution's Problem
@@ -151,11 +165,13 @@ something that is ugly but works. We need something that can:
 
 ## Bugs
 
-* Maybe I should have modified the WINE source code to read
-  `/etc/wine/wine.inf` to allow local admin modifications.
-  It'd be a cleaner solution. 
+* Maybe I should have modified the Wine [source
+  code](https://wiki.winehq.org/Source_Code) to read
+  `/etc/wine/wine.inf` to allow local admin modifications. It'd be a
+  cleaner solution.
 
-* I don't use the daemon code so it is not well tested.
+* I don't personally use the -d (daemon) mode, so that code path is
+  not as well tested.
 
 * Daemonization makes a straight-forward script seem overly complicated.
 
@@ -163,7 +179,7 @@ something that is ugly but works. We need something that can:
   make sense if I'm creating new WINEPREFIXes and immediately
   installing software. I should instead use `inotifywait` to wait on
   the directory which contains all my WINEPREFIXes
-  (`~/.wine/prefixes`).
+  (`~/.wine/prefixes/`).
 
 * The daemon edits files as soon as a change is detected. This may be
   incorrect if there is another process that is altering the file
