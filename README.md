@@ -14,15 +14,19 @@ Sweep away those annoying MIMEs before they explode!
     -d: daemonize
     -k: kill daemon
 
-In general you will run **mimesweeper** with no arguments. It removes
-files such as ~/.local/ share/mime/packages/x-wine*. It modifies the
-user's local system.reg file so new associations will not be created.
-(As long as the same WINEPREFIX directory is used, which is Wine's
-default.)
+In general you will run **mimesweeper** with no arguments. Except for
+errors, it is silent by default. If you want to see what it's doing,
+use the -v options.
+
+**mimesweeper** clears associations by removing files such as
+`~/.local/ share/mime/packages/x-wine*`. It modifies the user's local
+`system.reg` files so new associations will not be created. This stays
+in effect as long as the same WINEPREFIX directory is used, which is
+Wine's default.
 
 If **mimesweeper** is run under **sudo**, it will also prevent MIME
 associations even if you later create a new WINEPREFIX directory. It
-does this by editing the system wine.inf files. However, due to Wine
+does this by editing the system `wine.inf` files. However, due to Wine
 keeping configuration files under /usr instead of /etc, this script
 must be run again if wine is upgraded.
 
@@ -193,4 +197,12 @@ something that is ugly but works. We need something that can:
   which would return a group of events (instead of exiting on the
   first one). It could quit one second after the last event was
   received.
-  
+
+* The list of directories to search is fixed. I originally had my code
+  searching for the `wine` executable in the PATH to determine where
+  it was installed, and thus where the wine.inf files were. However,
+  that failed when I wanted the script to run as root, which often has
+  a more limited PATH. Still, it might not be a bad idea in the future
+  if there are requests for support from people that use different
+  install directories.
+
