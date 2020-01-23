@@ -213,7 +213,7 @@ patchfiles $(
 	if [[ -w "$inffile" ]]; then
 	    echo  "$inffile"
 	elif fgrep -q 'winemenubuilder.exe -a' "$inffile" 2>/dev/null; then
-	    echo "Error: Cannot write to $inffile. Please use sudo." >&2
+	    verbose "Error: Cannot write to $inffile. Please use sudo." >&2
 	fi
     done
 )
@@ -243,7 +243,7 @@ fi
     while true; do
 	if [[ $UID -eq 0 ]]; then
 	    # Asterisk used so nullglob will remove non-existant files. 
-	    conffiles=( {/usr,/usr/local,/opt/wine*}/share/wine/wine*.inf )
+	    conffiles=( {/usr,/usr/local,/opt/wine*,/pkg}/share/wine/wine*.inf )
 	else
 	    conffiles=( ~/.wine*/system.reg ~/.wine*/*/system.reg )
 	fi
