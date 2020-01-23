@@ -1,0 +1,274 @@
+#!/bin/bash
+
+# mimesweeper: Remove all Wine file associations and attempt to
+# prevent Wine from adding any more in the future.
+
+# Created: <2020-01-22 13:28:14 hackerb9>
+
+
+# DISCUSSION, PROBLEMS, POSSIBLE SOLUTIONS, AND PITFALLS
+
+# THE PROBLEM: By default, Wine hijacks mimetypes and file associations. 
+
+# (Note: Wine ought to have a system wide /etc/wine/wine.inf for local preferences.)
+
+###
+# First Solution: There is a checkbox option in winecfg to disable
+# "Manage File Associations".
+
+# First Solution's Problem: it has to be unchecked every time a new
+# WINEPREFIX is created. (Often, for me).
+
+###
+# Second Solution (A): The Wine project has a configuration file -
+# /usr/share/wine/wine.inf - which allows one to set a systemwide
+# preference by editing the [Services] section and removing the "-a"
+# switch from winemenubuilder.exe.
+
+# Second Solution (A)'s Problem: Unfortunately, Unix distributions such as
+# Debian and Arch do not allow configuration files under /usr, so
+# every time a new version of wine is released, the wine.inf file gets
+# clobbered with no option to merge locally made changes. 
+
+# Second Solution (B): Make changes as in (A), but use system package
+# tools to prevent the file from being clobbered. For Debian-based
+# systems:
+#
+#   dpkg-divert  --local  --rename  /usr/share/wine/wine.inf 
+#   cd /usr/share/wine
+#   cp  wine.inf.distrib  wine.inf 
+#   sed -i~ 's/winemenubuilder.exe -a/winemenubuilder.exe/g'  wine.inf
+
+# Second Solution (B)'s Problem: important additions and changes to
+# wine.inf from Wine developers will not be merged during an upgrade,
+# possibly causing breakage and confusion.
+
+# Second Solution Addendum: Note that if wine had already been run in
+# a WINEPREFIX before the wine.inf was modified, then the user will
+# have to also edit the $WINEPREFIX/system.reg file in the same way.
+
+###
+# Third Solution (All): disable winemenubuilder.exe completely.
+
+# Third Solution's Problem: this also disables adding installed
+# programs to the GUI menu. While an acceptable tradeoff, it would be
+# preferable to only disable the MIME type associations.
+
+##
+# Third Solution (A): set an environment variable before running any
+# installer to disable winemenubuilder.exe:
+#
+#   WINEDLLOVERRIDES=winemenubuilder.exe=d wine setup.exe
+
+# Third Solution (A)'s Problem: requires me to remember the
+# incantation for every installer. I want to "set and forget" this.
+
+##
+# Third Solution (B): Create a registry file to disable winemenubuilder.exe:
+#
+#   regedit <<< $'[HKEY_CURRENT_USER\Software\Wine\DllOverrides]\n"winemenubuilder.exe"=""\n'
+
+# Third Solution (B)'s Problem: must be run for every new WINEPREFIX
+# (which is every time for me).
+
+##
+# Third Solution (C): use UNIX system's package tools to rename
+# winemenubuilder.exe so it cannot be found and will not be
+# reinstalled at upgrade. For systems that use the Debian package
+# tools (dpkg, apt):
+#
+#   dpkg-divert --local --rename /usr/lib/wine/winemenubuilder.exe.so
+#   dpkg-divert --local --rename /usr/lib64/wine/winemenubuilder.exe.so
+
+# Third Solution (C)'s Problem: Disables winemenubuilder completely,
+# meaning applications are no longer added to the menus. Also, the
+# instructions for doing this depend on what flavor of UNIX is being
+# used.
+
+###
+# Fourth Solution: There is no fourth solution. Nevertheless, we can
+# cobble a Frankensteinian beast together from the previous attempts
+# and make something that is ugly but works.
+
+# A. Remove any existing Wine MIME associations.
+#
+# B. Edit the wine.inf file (as in Second Solution) so that it always
+#    has the latest updates from the Wine developers, but is easy to
+#    fix when Wine is upgraded.
+#
+# C. Handle new updates. Ideally, this would be integrated with
+#    installation or upgrade of Wine, but we can't do that easily.
+#
+#    Instead, this script should be able to be run from cron (no
+#    output except errors). Moreover, it would be nice if it could
+#    keep running in the background and use inotifywait to check for
+#    changes.
+
+# The script below attempts to implement this "fourth solution".
+######################################################################
+
+nflag=		    # Set "nflag=echo" to just show what would be done.
+
+dflag=		    # Set to anything to additionally fork a
+		    # background daemon to monitor & fix config files.
+
+vflag=		    # Set to anything to make script more verbose.
+
+shopt -s nullglob		# Patterns which match no files become
+				# a null string.
+
+IFS=$'\n'			# Allow spaces in paths, just in case.
+
+# Lockfile to make sure mimesweeper daemon runs only once.
+mkdir -p /run/user/$UID
+lockfile=/run/user/$UID/mimesweeper.lock
+
+
+##
+# Helper routines.
+verbose() {
+    [[ "$vflag" ]] && echo "$@"
+}
+
+patchfiles() {
+    # Given one (or more) filenames, edit each file to remove the -a
+    # option from winemenubuilder.exe. The original file is backed up
+    # using a ~ suffix.
+
+    # Only edit files which contain the problematic string.
+    [[ "$#" -gt 0 ]] || return
+    set -- $(fgrep -l 'winemenubuilder.exe -a'  "$@" 2>/dev/null)
+    [[ "$#" -gt 0 ]] || return
+
+    verbose "Backing up and fixing: $@"
+
+    $nflag sed -i~  's/winemenubuilder.exe -a/winemenubuilder.exe/g'  "$@"
+}
+
+killdaemon() {
+    # If script is still running in background, stop it.
+    if [[ -r $lockfile ]]; then
+	if flock -n $lockfile rm $lockfile; then
+	    verbose "Stale lockfile removed"
+	    return
+	fi
+	local pgid=$(cat $lockfile)
+	if $nflag kill -1 -$pgid; then
+	    if flock -w 3 $lockfile rm $lockfile; then
+		verbose "Mimesweeper daemon killed"
+	    else
+		echo "Error: killing Process Group $pgid did not release lock." >&2
+	    fi
+	else
+	    echo "Error: could not kill Process Group ID '$pgid'." >&2
+	fi
+    else
+	verbose "Nothing needs doing. No mimesweeper lock file found."
+    fi			
+}
+
+showargs() {
+    printf ' "%s" '  "$@"
+    echo
+}
+
+
+##
+# Command line arguments
+while getopts "ndkv" arg; do
+    case "$arg" in
+	n|not-really) nflag=showargs ;;
+	v|verbose)    vflag=yup ;;
+	d|daemonize)  dflag=yup ;;
+	k|kill-daemon)kflag=yup ;;
+	*) echo "Unrecognized option '$arg'" >&2 ;;
+    esac
+done
+
+if [[ "$kflag" ]]; then killdaemon; exit ; fi
+
+
+# MAIN #####################################################################
+
+##
+# Remove MIME associations added by Wine for local user.
+for f in ~/.local/share/mime/packages/x-wine* \
+	 ~/.local/share/mime/application/x-wine-extension* \
+	 ~/.local/share/applications/wine-extension* \
+	 ~/.local/share/icons/hicolor/*/*/application-x-wine-extension*
+do
+    verbose "Removing '$f'"
+    $nflag rm "$f"
+done
+
+
+##
+# Edit the local user's "system.reg" files.
+patchfiles ~/.wine*/system.reg ~/.wine*/*/system.reg
+
+##
+# Edit the system wide wine.inf files. (Requires superuser).
+patchfiles $(
+    for inffile in {/usr,/usr/local,/opt/wine*}/share/wine/wine.inf; do
+	if [[ -w "$inffile" ]]; then
+	    echo  "$inffile"
+	elif fgrep -q 'winemenubuilder.exe -a' "$inffile" 2>/dev/null; then
+	    echo "Error: Cannot write to $inffile. Please use sudo." >&2
+	fi
+    done
+)
+
+
+##
+# All done. Unless the user asked us to run in the background.
+if [[ -z "$dflag" ]]; then
+    verbose "All done." 
+    exit 0
+fi
+
+
+# DAEMON #####################################################################
+# Fork to background and wait for any of the config files to change.
+
+if ! command -v inotifywait >&-; then
+    echo "Error: Please install inotifywait." >&2
+    exit 1
+fi
+
+(
+    exec 9<>$lockfile
+    flock --nonblock 9 || exit 1
+    verbose "Forking to background to maintain config files"
+    set +o notify
+    while true; do
+	if [[ $UID -eq 0 ]]; then
+	    # Asterisk used so nullglob will remove non-existant files. 
+	    conffiles=( {/usr,/usr/local,/opt/wine*}/share/wine/wine*.inf )
+	else
+	    conffiles=( ~/.wine*/system.reg ~/.wine*/*/system.reg )
+	fi
+	
+	# Make sure all files are correct at least once a day.
+	patchfiles "${conffiles[@]}"
+	
+	if [ "${conffiles[*]}" ]; then
+	    inotifywait -q -t $((24*60*60)) -e modify,move_self,delete_self \
+			--format "%w" "${conffiles[@]}" | patchfiles `cat`
+	else
+	    # No config files found to monitor, but maybe they'll show up later.
+	    sleep $((60*60))
+	fi
+    done &
+
+    unset IFS
+    pgid=$(ps -p $$ -o pgid | tail -1)
+    echo $pgid >&9
+    chmod 666 $lockfile
+    verbose "Mimesweeper daemon started"
+) && exit
+
+
+verbose "No need to fork as another instance is already running in the background."
+verbose "Use mimesweeper -k if you wish to kill it."
+
+exit
