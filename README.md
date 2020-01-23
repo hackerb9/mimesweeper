@@ -60,10 +60,10 @@ locally made changes.
 Make changes as in (Part A), but use system package tools to prevent the
 file from being clobbered. For Debian-based systems:
 
-  dpkg-divert  --local  --rename  /usr/share/wine/wine.inf 
-  cd /usr/share/wine
-  cp  wine.inf.distrib  wine.inf 
-  sed -i~ 's/winemenubuilder.exe -a/winemenubuilder.exe/g'  wine.inf
+    dpkg-divert  --local  --rename  /usr/share/wine/wine.inf 
+    cd /usr/share/wine
+    cp  wine.inf.distrib  wine.inf 
+    sed -i~ 's/winemenubuilder.exe -a/winemenubuilder.exe/g'  wine.inf
 
 #### Second Solution (Part B)'s Problem
 
@@ -118,8 +118,8 @@ Use UNIX host system's package tools to rename winemenubuilder.exe so
 it cannot be found and will not be reinstalled at upgrade. For systems
 that use the Debian package tools (dpkg, apt):
 
-  dpkg-divert --local --rename /usr/lib/wine/winemenubuilder.exe.so
-  dpkg-divert --local --rename /usr/lib64/wine/winemenubuilder.exe.so
+    dpkg-divert --local --rename /usr/lib/wine/winemenubuilder.exe.so
+    dpkg-divert --local --rename /usr/lib64/wine/winemenubuilder.exe.so
 
 #### Third Solution (Part C)'s Problem
 
