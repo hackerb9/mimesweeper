@@ -42,7 +42,7 @@ PROBLEMS, POSSIBLE SOLUTIONS, AND PITFALLS
 
 By default, Wine hijacks
 [MIME-types](https://en.wikipedia.org/wiki/MIME) and file
-associations. That means when you click on a JPEG in your in your
+associations. That means when you click on a JPEG in your
 filebrowser, it may fire up Internet Explorer to view it! This is not
 only silly, but unnecessarily indiscriminate. I only want Wine
 running when I explicitly ask to run a Microsoft Windows program,
