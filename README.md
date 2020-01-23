@@ -30,6 +30,9 @@ does this by editing the system `wine.inf` files. However, due to Wine
 keeping configuration files under /usr instead of /etc, this script
 must be run again if wine is upgraded.
 
+Mimesweeper is safe to run as a cronjob, but it will only remove a
+user's MIME associations when run from the user's account.
+
 ## Discussion
 
 PROBLEMS, POSSIBLE SOLUTIONS, AND PITFALLS
