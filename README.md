@@ -127,7 +127,8 @@ installer. I want to "set and forget" this.
 Create a registry file to disable winemenubuilder.exe:
 
 ```bash
-regedit <<< $'[HKEY_CURRENT_USER\Software\Wine\DllOverrides]\n"winemenubuilder.exe"=""\n'
+cat >foo.reg <<< $'[HKEY_CURRENT_USER\Software\Wine\DllOverrides]\n"winemenubuilder.exe"=""\n'
+regedit foo.reg
 ```
 
 #### Third Solution (Part B)'s Problem
