@@ -1,5 +1,7 @@
 # mimesweeper
 
+<img align="right" width="30%" src="README.md.d/Mimic.png">
+
 Remove all current Wine MIME-types and file extension associations.
 Attempt to prevent Wine from adding any more in the future.
 
