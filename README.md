@@ -26,17 +26,18 @@ only silly, but unnecessarily indiscriminate. I only want Wine
 running when I explicitly ask to run a Microsoft Windows program,
 never because there is some MIME-type it thinks it can handle.
 
-In a perfect world, Wine wouldn't do this in the first place. In an
+In a perfect world, Wine wouldn't add associations by default. In an
 _almost_ perfect world, Wine would have a system wide file —
-/etc/wine/wine.inf — for local preferences. We live in neither and
+say, /etc/wine/wine.inf — for local preferences. We live in neither and
 must seek some other answer.
 
 ### First Solution
 There is a checkbox option in `winecfg` to disable "Manage File
 Associations".
 
-### First Solution's Problem
-It has to be unchecked every time a new WINEPREFIX is created. (Often, for me).
+#### First Solution's Problem
+
+It has to be unchecked every time a new WINEPREFIX is created. This may work for other people, but way too often for me.
 
 ### Second Solution (Part A)
 
@@ -47,7 +48,7 @@ winemenubuilder.exe. For example, one could edit it like so:
 
     sed -i~ 's/winemenubuilder.exe -a/winemenubuilder.exe/g'  /usr/share/wine/wine.inf
 
-### Second Solution (Part A)'s Problem
+#### Second Solution (Part A)'s Problem
 
 Unfortunately, Unix distributions such as Debian and Arch do not allow
 configuration files under /usr, so every time a new version of Wine is
@@ -64,7 +65,7 @@ file from being clobbered. For Debian-based systems:
   cp  wine.inf.distrib  wine.inf 
   sed -i~ 's/winemenubuilder.exe -a/winemenubuilder.exe/g'  wine.inf
 
-### Second Solution (Part B)'s Problem
+#### Second Solution (Part B)'s Problem
 
 Important additions and changes to wine.inf from Wine developers will
 not be merged during an upgrade, possibly causing breakage and
@@ -80,7 +81,7 @@ wine.inf is modified, then the user will have to also edit the
 
 Disable winemenubuilder.exe completely. (Three methods).
 
-### Third Solution (general)'s Problem
+#### Third Solution (general)'s Problem
 
 This also disables adding installed programs to the GUI menu. While an
 acceptable tradeoff, it would be preferable to only disable the MIME
@@ -93,7 +94,7 @@ winemenubuilder.exe:
 
   WINEDLLOVERRIDES=winemenubuilder.exe=d wine setup.exe
 
-### Third Solution (Part A)'s Problem
+#### Third Solution (Part A)'s Problem
 
 Requires user to remember the incantation for every single program
 installer. I want to "set and forget" this.
@@ -107,7 +108,7 @@ Create a registry file to disable winemenubuilder.exe:
 regedit <<< $'[HKEY_CURRENT_USER\Software\Wine\DllOverrides]\n"winemenubuilder.exe"=""\n'
 ```
 
-### Third Solution (Part B)'s Problem
+#### Third Solution (Part B)'s Problem
 
 Must be run for every new WINEPREFIX (which is every time for me).
 
@@ -120,7 +121,7 @@ that use the Debian package tools (dpkg, apt):
   dpkg-divert --local --rename /usr/lib/wine/winemenubuilder.exe.so
   dpkg-divert --local --rename /usr/lib64/wine/winemenubuilder.exe.so
 
-### Third Solution (Part C)'s Problem
+#### Third Solution (Part C)'s Problem
 
 Disables winemenubuilder completely, meaning applications are no
 longer added to the desktop menus. Also, the instructions for doing
@@ -130,7 +131,7 @@ this depend on what flavor of UNIX is being used.
 
 All standard solutions are broken. Nevertheless, we can cobble a
 Frankensteinian beast together from the previous attempts and make
-something that is ugly but works.
+something that is ugly but works. We need something that can:
 
 1. Remove any existing Wine MIME associations.
 
