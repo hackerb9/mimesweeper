@@ -165,9 +165,9 @@ something that is ugly but works. We need something that can:
   the directory which contains all my WINEPREFIXes
   (`~/.wine/prefixes`).
 
-* Editing of files happens as soon as a change is detected. This may
-  be incorrect (race condition) if there is another process that is
-  altering the file incrementally.
+* The daemon edits files as soon as a change is detected. This may be
+  incorrect if there is another process that is altering the file
+  incrementally. (Race condition).
 
 * `inotifywait` has only two modes: single-event or monitor.
   Single-event is quite easy to use from a shell-script, but always
