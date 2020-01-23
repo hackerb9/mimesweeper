@@ -115,7 +115,7 @@ Must be run for every new WINEPREFIX (which is every time for me).
 ### Third Solution (Part C)
 
 Use UNIX host system's package tools to rename winemenubuilder.exe so
-it cannot be found and will not be reinstalled at upgrade. For systems
+it cannot be run and will not be reinstalled at upgrade. For systems
 that use the Debian package tools (dpkg, apt):
 
     dpkg-divert --local --rename /usr/lib/wine/winemenubuilder.exe.so
