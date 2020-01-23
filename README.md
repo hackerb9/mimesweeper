@@ -37,7 +37,7 @@ Associations".
 
 #### First Solution's Problem
 
-It has to be unchecked every time a new WINEPREFIX is created. This may work for other people, but way too often for me.
+It has to be unchecked every time a new WINEPREFIX is created. This may work for other people, but happens way too often for me.
 
 ### Second Solution (Part A)
 
