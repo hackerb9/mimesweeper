@@ -1,11 +1,10 @@
 # mimesweeper
 
-<img align="right" width="30%" src="README.md.d/Mimic.png">
+<img align="right" width="30%" src="README.md.d/Mimic.jpg" alt="Sweep away those annoying MIMEs before they explode!">
 
 Remove all current Wine MIME-types and file extension associations.
 Attempt to prevent Wine from adding any more in the future.
 
-Sweep away those annoying MIMEs before they explode!
 
 ## Usage
 
